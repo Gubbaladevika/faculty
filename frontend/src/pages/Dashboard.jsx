@@ -14,7 +14,7 @@ const Dashboard = () => {
 
         {/* View Faculty */}
         <div
-          onClick={() => navigate("/faculty")}
+          onClick={() => navigate("/faculty-list")}
           className="bg-white shadow-lg rounded-xl p-6 text-center cursor-pointer hover:shadow-xl transition"
         >
           <h2 className="text-xl font-semibold mb-2">View Faculty</h2>
@@ -25,7 +25,7 @@ const Dashboard = () => {
 
         {/* Give Feedback */}
         <div
-          onClick={() => navigate("/feedback")}
+          onClick={() => navigate("/feedbackform")}
           className="bg-white shadow-lg rounded-xl p-6 text-center cursor-pointer hover:shadow-xl transition"
         >
           <h2 className="text-xl font-semibold mb-2">Give Feedback</h2>
