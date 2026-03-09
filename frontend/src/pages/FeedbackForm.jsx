@@ -1,100 +1,65 @@
-import React, { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useState } from "react";
+import RatingStars from "../components/RatingStars";
+
+const faculties = [
+  { id: 1, name: "Dr. Ramesh" },
+  { id: 2, name: "Prof. Anitha" },
+  { id: 3, name: "Dr. Kumar" },
+];
 
 const FeedbackForm = () => {
-  const { id } = useParams(); // faculty id from URL
+  const [ratings, setRatings] = useState({});
+  const [submitted, setSubmitted] = useState(false);
 
-  const [formData, setFormData] = useState({
-    subject: "",
-    rating: "",
-    comments: "",
-  });
-
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
+  const handleRatingChange = (facultyId, value) => {
+    setRatings({
+      ...ratings,
+      [facultyId]: value,
     });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("Submitted Feedback:", {
-      facultyId: id,
-      ...formData,
-    });
-
-    alert("Feedback Submitted Successfully!");
-    
-    // later we connect backend here
+  const handleSubmit = () => {
+    console.log(ratings);
+    setSubmitted(true);
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
-      <div className="bg-white shadow-lg rounded-2xl w-full max-w-xl p-8">
-        
-        <h2 className="text-2xl font-bold text-center mb-6">
-          Give Feedback (Faculty ID: {id})
+    <div className="min-h-screen bg-gray-100 p-6">
+      <div className="max-w-2xl mx-auto bg-white shadow-lg rounded-xl p-6">
+        <h2 className="text-2xl font-bold mb-6 text-center">
+          Faculty Feedback Form
         </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          
-          {/* Subject */}
-          <div>
-            <label className="block mb-2 font-medium">Subject</label>
-            <input
-              type="text"
-              name="subject"
-              value={formData.subject}
-              onChange={handleChange}
-              required
-              className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              placeholder="Enter subject name"
+        {faculties.map((faculty) => (
+          <div
+            key={faculty.id}
+            className="mb-6 p-4 border rounded-lg"
+          >
+            <h3 className="font-semibold mb-3">
+              {faculty.name}
+            </h3>
+
+            <RatingStars
+              value={ratings[faculty.id] || 0}
+              onChange={(value) =>
+                handleRatingChange(faculty.id, value)
+              }
             />
           </div>
+        ))}
 
-          {/* Rating */}
-          <div>
-            <label className="block mb-2 font-medium">Rating</label>
-            <select
-              name="rating"
-              value={formData.rating}
-              onChange={handleChange}
-              required
-              className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            >
-              <option value="">Select Rating</option>
-              <option value="1">1 - Poor</option>
-              <option value="2">2 - Average</option>
-              <option value="3">3 - Good</option>
-              <option value="4">4 - Very Good</option>
-              <option value="5">5 - Excellent</option>
-            </select>
-          </div>
+        <button
+          onClick={handleSubmit}
+          className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
+        >
+          Submit Feedback
+        </button>
 
-          {/* Comments */}
-          <div>
-            <label className="block mb-2 font-medium">Comments</label>
-            <textarea
-              name="comments"
-              value={formData.comments}
-              onChange={handleChange}
-              required
-              rows="4"
-              className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              placeholder="Write your feedback..."
-            ></textarea>
-          </div>
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-300"
-          >
-            Submit Feedback
-          </button>
-
-        </form>
+        {submitted && (
+          <p className="text-green-600 mt-4 text-center">
+            Feedback Submitted Successfully!
+          </p>
+        )}
       </div>
     </div>
   );

@@ -1,8 +1,8 @@
 import { Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
-import FacultyList from "./pages/FacultyList";
 import FeedbackForm from "./pages/FeedbackForm";
+import Signup from "./pages/Signup";
 
 function App() {
   return (
@@ -10,8 +10,8 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/faculty-list" element={<FacultyList />} />
-        <Route path="/feedbackform/:id" element={<FeedbackForm />} />
+        <Route path="/feedbackform" element={<FeedbackForm />} />
+        <Route path="/signup" element={<Signup />} />
       </Routes>
   
   );
