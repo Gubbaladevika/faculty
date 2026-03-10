@@ -17,6 +17,7 @@ const Login = () => {
 
     if (email === storedUser.email && password === storedUser.password) {
       alert("Login Successful");
+      localStorage.setItem("userEmail", email);
       navigate("/dashboard");
     } else {
       alert("Invalid email or password");
