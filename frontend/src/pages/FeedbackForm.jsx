@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import RatingStars from "../components/RatingStars";
+import Navbar from "../components/Navbar";
 
 const faculties = [
   { id: 1, name: "Dr. Ramesh", subject: "Database Systems" },
@@ -18,19 +19,32 @@ const questions = [
 ];
 
 const FeedbackForm = () => {
+
   const usermail = localStorage.getItem("userEmail");
+
   const [ratings, setRatings] = useState({});
   const [comments, setComments] = useState({});
   const [submitted, setSubmitted] = useState(false);
+  const [faculty, setFaculty] = useState("");
 
+  // Check if feedback already submitted for selected faculty
   useEffect(() => {
-    const status = localStorage.getItem(`feedback_${usermail}`);
+
+    if (!faculty) return;
+
+    const key = `feedback_${usermail}_${faculty}`;
+    const status = localStorage.getItem(key);
+
     if (status === "true") {
       setSubmitted(true);
+    } else {
+      setSubmitted(false);
     }
-  }, [usermail]);
+
+  }, [faculty, usermail]);
 
   const handleRatingChange = (facultyId, questionKey, value) => {
+
     setRatings({
       ...ratings,
       [facultyId]: {
@@ -38,27 +52,43 @@ const FeedbackForm = () => {
         [questionKey]: value,
       },
     });
+
   };
 
   const handleCommentChange = (facultyId, text) => {
+
     setComments({
       ...comments,
       [facultyId]: text,
     });
+
   };
 
   const handleSubmit = () => {
 
-    localStorage.setItem("feedbackSubmitted", "true");
+    if (!faculty) {
+      alert("Please select a faculty");
+      return;
+    }
+
+    const key = `feedback_${usermail}_${faculty}`;
+
+    localStorage.setItem(key, "true");
+
     setSubmitted(true);
 
     console.log({
+      faculty,
       ratings,
       comments,
     });
+
   };
 
   return (
+    <>
+    <Navbar />
+
     <div className="min-h-screen bg-gray-100 p-6">
 
       <div className="max-w-3xl mx-auto bg-white shadow-lg rounded-xl p-6">
@@ -67,52 +97,83 @@ const FeedbackForm = () => {
           Faculty Feedback Form
         </h2>
 
+        {/* Faculty Dropdown */}
+
+        
+        <select
+  className="w-full border p-2 rounded mb-4"
+  value={faculty}
+  onChange={(e) => setFaculty(e.target.value)}
+>
+
+  <option value="">Select Faculty</option>
+
+  {faculties.map((f) => {
+
+    const key = `feedback_${usermail}_${f.name}`;
+    const isSubmitted = localStorage.getItem(key) === "true";
+
+    return (
+      <option key={f.id} value={f.name}>
+        {f.name} - {f.subject} {isSubmitted ? "✓ Submitted" : ""}
+      </option>
+    );
+
+  })}
+
+</select>
+
         {submitted && (
           <p className="text-green-600 text-center mb-4">
-            You have already submitted feedback
+            You have submitted feedback for this faculty
           </p>
         )}
 
-        {faculties.map((faculty) => (
+        {faculty &&
+          faculties
+            .filter((f) => f.name === faculty)
+            .map((faculty) => (
 
-          <div key={faculty.id} className="mb-8 border p-4 rounded-lg">
+              <div key={faculty.id} className="mb-8 border p-4 rounded-lg">
 
-            <h3 className="text-lg font-semibold mb-1">
-              {faculty.name}
-            </h3>
+                <h3 className="text-lg font-semibold mb-1">
+                  {faculty.name}
+                </h3>
 
-            <p className="text-gray-500 mb-4">
-              Subject: {faculty.subject}
-            </p>
+                <p className="text-gray-500 mb-4">
+                  Subject: {faculty.subject}
+                </p>
 
-            {questions.map((q) => (
-              <div key={q.key} className="mb-4">
+                {questions.map((q) => (
 
-                <p className="mb-1">{q.label}</p>
+                  <div key={q.key} className="mb-4">
 
-                <RatingStars
-                  value={ratings[faculty.id]?.[q.key] || 0}
-                  onChange={(value) =>
-                    handleRatingChange(faculty.id, q.key, value)
+                    <p className="mb-1">{q.label}</p>
+
+                    <RatingStars
+                      value={ratings[faculty.id]?.[q.key] || 0}
+                      onChange={(value) =>
+                        handleRatingChange(faculty.id, q.key, value)
+                      }
+                    />
+
+                  </div>
+
+                ))}
+
+                <textarea
+                  placeholder="Any suggestions or comments..."
+                  className="w-full mt-3 p-2 border rounded"
+                  value={comments[faculty.id] || ""}
+                  onChange={(e) =>
+                    handleCommentChange(faculty.id, e.target.value)
                   }
+                  disabled={submitted}
                 />
 
               </div>
+
             ))}
-
-            <textarea
-              placeholder="Any suggestions or comments..."
-              className="w-full mt-3 p-2 border rounded"
-              value={comments[faculty.id] || ""}
-              onChange={(e) =>
-                handleCommentChange(faculty.id, e.target.value)
-              }
-              disabled={submitted}
-            />
-
-          </div>
-
-        ))}
 
         <button
           onClick={handleSubmit}
@@ -123,12 +184,15 @@ const FeedbackForm = () => {
               : "bg-blue-600 hover:bg-blue-700"
           }`}
         >
+
           {submitted ? "Feedback Submitted" : "Submit Feedback"}
+
         </button>
 
       </div>
 
     </div>
+    </>
   );
 };
 
