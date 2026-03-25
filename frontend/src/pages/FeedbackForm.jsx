@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import RatingStars from "../components/RatingStars";
 import Navbar from "../components/Navbar";
+import axios from "axios";
 
 const faculties = [
   { id: 1, name: "Dr. Ramesh", subject: "Database Systems" },
@@ -64,26 +65,53 @@ const FeedbackForm = () => {
 
   };
 
-  const handleSubmit = () => {
+ const handleSubmit = async () => {
 
-    if (!faculty) {
-      alert("Please select a faculty");
-      return;
-    }
+  if (!faculty) {
+    alert("Please select a faculty");
+    return;
+  }
+
+  const facultyData = faculties.find((f) => f.name === faculty);
+
+  const data = {
+  student: 1,  // TEMP (we fix later properly)
+  faculty: facultyData.id,
+
+  teaching: ratings[facultyData.id]?.teaching || 0,
+  knowledge: ratings[facultyData.id]?.knowledge || 0,
+  communication: ratings[facultyData.id]?.communication || 0,
+  interaction: ratings[facultyData.id]?.interaction || 0,
+  behaviour: ratings[facultyData.id]?.behaviour || 0,
+  punctuality: ratings[facultyData.id]?.punctuality || 0,
+  overall: ratings[facultyData.id]?.overall || 0,
+
+  comments: comments[facultyData.id] || ""
+};
+
+  try {
+
+    await axios.post(
+      "http://127.0.0.1:8000/api/submit-feedback/",
+      data
+    );
+
+    alert("Feedback submitted successfully");
 
     const key = `feedback_${usermail}_${faculty}`;
-
     localStorage.setItem(key, "true");
 
     setSubmitted(true);
 
-    console.log({
-      faculty,
-      ratings,
-      comments,
-    });
+  } catch (error) {
 
-  };
+    console.error(error);
+    alert("Error submitting feedback");
+
+  }
+
+};
+
 
   return (
     <>

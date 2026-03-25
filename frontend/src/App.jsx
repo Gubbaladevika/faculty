@@ -4,6 +4,7 @@ import Dashboard from "./pages/Dashboard";
 import FeedbackForm from "./pages/FeedbackForm";
 import Signup from "./pages/Signup";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminDashboard from "./pages/AdminDashboard";
 
 
 function App() {
@@ -14,7 +15,7 @@ function App() {
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/feedbackform" element={<ProtectedRoute><FeedbackForm /></ProtectedRoute>} />
         <Route path="/signup" element={<Signup />} />
-        
+        <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
       </Routes>
   
   );
