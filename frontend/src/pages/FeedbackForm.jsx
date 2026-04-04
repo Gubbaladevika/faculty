@@ -1,225 +1,274 @@
-import { useState, useEffect } from "react";
-import RatingStars from "../components/RatingStars";
+import React, { useEffect, useState } from "react";
+import StarRating from "../components/StarRating";
 import Navbar from "../components/Navbar";
-import axios from "axios";
-
-const faculties = [
-  { id: 1, name: "Dr. Ramesh", subject: "Database Systems" },
-  { id: 2, name: "Prof. Anitha", subject: "Web Development" },
-  { id: 3, name: "Dr. Kumar", subject: "Machine Learning" },
-];
-
-const questions = [
-  { key: "teaching", label: "Teaching Quality" },
-  { key: "knowledge", label: "Subject Knowledge" },
-  { key: "communication", label: "Communication Clarity" },
-  { key: "interaction", label: "Interaction with Students" },
-  { key: "behaviour", label: "Behaviour & Attitude" },
-  { key: "punctuality", label: "Punctuality / Regularity" },
-  { key: "overall", label: "Overall Satisfaction" },
-];
 
 const FeedbackForm = () => {
+  const [departments, setDepartments] = useState([]);
+  const [groups, setGroups] = useState([]);
+  const [faculty, setFaculty] = useState([]);
+  const [submittedFaculty, setSubmittedFaculty] = useState([]);
 
-  const usermail = localStorage.getItem("userEmail");
+  const [formData, setFormData] = useState({
+    department: "",
+    group: "",
+    faculty: "",
+    teaching: 0,
+    knowledge: 0,
+    communication: 0,
+    interaction: 0,
+    behaviour: 0,
+    punctuality: 0,
+    overall: 0,
+    comments: "",
+  });
 
-  const [ratings, setRatings] = useState({});
-  const [comments, setComments] = useState({});
-  const [submitted, setSubmitted] = useState(false);
-  const [faculty, setFaculty] = useState("");
+  // 🔹 Load Departments
+useEffect(() => {
+  const token = localStorage.getItem("token");
 
-  // Check if feedback already submitted for selected faculty
-  useEffect(() => {
-
-    if (!faculty) return;
-
-    const key = `feedback_${usermail}_${faculty}`;
-    const status = localStorage.getItem(key);
-
-    if (status === "true") {
-      setSubmitted(true);
-    } else {
-      setSubmitted(false);
-    }
-
-  }, [faculty, usermail]);
-
-  const handleRatingChange = (facultyId, questionKey, value) => {
-
-    setRatings({
-      ...ratings,
-      [facultyId]: {
-        ...ratings[facultyId],
-        [questionKey]: value,
-      },
+  fetch("http://127.0.0.1:8000/api/departments/", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      setDepartments(Array.isArray(data) ? data : []);
+    })
+    .catch((err) => {
+      console.log("Department error:", err);
+      setDepartments([]);
     });
+}, []);
 
+  // 🔹 Department Change
+ const handleDepartmentChange = (e) => {
+  const deptId = e.target.value;
+
+  setFormData({ ...formData, department: deptId });
+
+  const token = localStorage.getItem("token");
+
+  fetch(`http://127.0.0.1:8000/api/groups/?department=${deptId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      setGroups(Array.isArray(data) ? data : []);
+    })
+    .catch((err) => {
+      console.log("Group error:", err);
+      setGroups([]);
+    });
+};
+  //  Group change
+  const handleGroupChange = (e) => {
+  const groupId = e.target.value;
+
+  setFormData({ ...formData, group: groupId });
+
+  const token = localStorage.getItem("token");
+
+  if (!token) return;
+
+  // faculty API
+  fetch(`http://127.0.0.1:8000/api/faculty/?group=${groupId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      setFaculty(Array.isArray(data) ? data : []);
+    })
+    .catch(() => setFaculty([]));
+
+  // feedback status API
+  fetch(`http://127.0.0.1:8000/api/feedback-status/?group=${groupId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      setSubmittedFaculty(Array.isArray(data) ? data : []);
+    })
+    .catch(() => setSubmittedFaculty([]));
+};
+
+  // 🔹 Input Change
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
   };
 
-  const handleCommentChange = (facultyId, text) => {
+  // 🔹 Submit Feedback
+  const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    setComments({
-      ...comments,
-      [facultyId]: text,
-    });
+  const token = localStorage.getItem("token");
 
-  };
-
- const handleSubmit = async () => {
-
-  if (!faculty) {
-    alert("Please select a faculty");
+  if (!token) {
+    alert("Login expired. Please login again.");
     return;
   }
 
-  const facultyData = faculties.find((f) => f.name === faculty);
-
-  const data = {
-  student: 1,  // TEMP (we fix later properly)
-  faculty: facultyData.id,
-
-  teaching: ratings[facultyData.id]?.teaching || 0,
-  knowledge: ratings[facultyData.id]?.knowledge || 0,
-  communication: ratings[facultyData.id]?.communication || 0,
-  interaction: ratings[facultyData.id]?.interaction || 0,
-  behaviour: ratings[facultyData.id]?.behaviour || 0,
-  punctuality: ratings[facultyData.id]?.punctuality || 0,
-  overall: ratings[facultyData.id]?.overall || 0,
-
-  comments: comments[facultyData.id] || ""
-};
-
-  try {
-
-    await axios.post(
-      "http://127.0.0.1:8000/api/submit-feedback/",
-      data
-    );
-
-    alert("Feedback submitted successfully");
-
-    const key = `feedback_${usermail}_${faculty}`;
-    localStorage.setItem(key, "true");
-
-    setSubmitted(true);
-
-  } catch (error) {
-
-    console.error(error);
-    alert("Error submitting feedback");
-
+  if (!formData.faculty) {
+    alert("Select faculty first");
+    return;
   }
 
+  const payload = {
+    faculty: Number(formData.faculty),
+    teaching: formData.teaching,
+    knowledge: formData.knowledge,
+    communication: formData.communication,
+    interaction: formData.interaction,
+    behaviour: formData.behaviour,
+    punctuality: formData.punctuality,
+    overall: formData.overall,
+    comments: formData.comments,
+  };
+
+  try {
+    const res = await fetch("http://127.0.0.1:8000/api/submit-feedback/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    let data;
+
+try {
+  data = await res.json();
+} catch {
+  data = { error: "Server error" };
+}
+
+    if (res.status === 401) {
+      alert("Session expired. Login again.");
+      return;
+    }
+
+    if (!res.ok) {
+      console.log(data);
+      alert(data?.detail || "Submission failed");
+      return;
+    }
+
+    alert("Feedback submitted");
+
+    setSubmittedFaculty((prev) => [
+      ...prev,
+      Number(formData.faculty),
+    ]);
+  } catch (err) {
+    console.error(err);
+    alert("Server error");
+  }
 };
 
+
+  // 🔹 Rating Component
+  const handleRatingChange = (name, value) => {
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
+  };
+
+  const Rating = ({ label, name }) => (
+    <div>
+      <label className="text-sm font-semibold">{label}</label>
+      <StarRating
+        name={name}
+        value={formData[name]}
+        onChange={handleRatingChange}
+      />
+    </div>
+  );
 
   return (
     <>
-    <Navbar />
+      <Navbar />
 
-    <div className="min-h-screen bg-gray-100 p-6">
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="bg-white p-8 rounded-xl shadow-lg w-[500px]">
 
-      <div className="max-w-3xl mx-auto bg-white shadow-lg rounded-xl p-6">
+          <h2 className="text-xl font-bold text-center mb-4">
+            Faculty Feedback
+          </h2>
 
-        <h2 className="text-2xl font-bold mb-6 text-center">
-          Faculty Feedback Form
-        </h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
 
-        {/* Faculty Dropdown */}
-
-        
-        <select
-  className="w-full border p-2 rounded mb-4"
-  value={faculty}
-  onChange={(e) => setFaculty(e.target.value)}
->
-
-  <option value="">Select Faculty</option>
-
-  {faculties.map((f) => {
-
-    const key = `feedback_${usermail}_${f.name}`;
-    const isSubmitted = localStorage.getItem(key) === "true";
-
-    return (
-      <option key={f.id} value={f.name}>
-        {f.name} - {f.subject} {isSubmitted ? "✓ Submitted" : ""}
-      </option>
-    );
-
-  })}
-
-</select>
-
-        {submitted && (
-          <p className="text-green-600 text-center mb-4">
-            You have submitted feedback for this faculty
-          </p>
-        )}
-
-        {faculty &&
-          faculties
-            .filter((f) => f.name === faculty)
-            .map((faculty) => (
-
-              <div key={faculty.id} className="mb-8 border p-4 rounded-lg">
-
-                <h3 className="text-lg font-semibold mb-1">
-                  {faculty.name}
-                </h3>
-
-                <p className="text-gray-500 mb-4">
-                  Subject: {faculty.subject}
-                </p>
-
-                {questions.map((q) => (
-
-                  <div key={q.key} className="mb-4">
-
-                    <p className="mb-1">{q.label}</p>
-
-                    <RatingStars
-                      value={ratings[faculty.id]?.[q.key] || 0}
-                      onChange={(value) =>
-                        handleRatingChange(faculty.id, q.key, value)
-                      }
-                    />
-
-                  </div>
-
+            {/* Department */}
+            <div>
+              <label>Department</label>
+              <select onChange={handleDepartmentChange} className="w-full p-2 border">
+                <option>Select Department</option>
+                {(Array.isArray(departments) ? departments : []).map((d) => (
+                  <option key={d.id} value={d.id}>{d.name}</option>
                 ))}
+              </select>
+            </div>
 
-                <textarea
-                  placeholder="Any suggestions or comments..."
-                  className="w-full mt-3 p-2 border rounded"
-                  value={comments[faculty.id] || ""}
-                  onChange={(e) =>
-                    handleCommentChange(faculty.id, e.target.value)
-                  }
-                  disabled={submitted}
-                />
+            {/* Group */}
+            <div>
+              <label>Group</label>
+              <select onChange={handleGroupChange} className="w-full p-2 border">
+                <option>Select Group</option>
+                {(Array.isArray(groups) ? groups : []).map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.name} - Year {g.year}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-              </div>
+            {/* Faculty */}
+            <div>
+              <label>Faculty</label>
+              <select name="faculty" onChange={handleChange} className="w-full p-2 border">
+                <option>Select Faculty</option>
+                {(Array.isArray(faculty) ? faculty : []).map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name} {submittedFaculty.includes(f.id) ? "✔" : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-            ))}
+            {/* Ratings */}
+            <Rating label="Teaching" name="teaching" />
+            <Rating label="Knowledge" name="knowledge" />
+            <Rating label="Communication" name="communication" />
+            <Rating label="Interaction" name="interaction" />
+            <Rating label="Behaviour" name="behaviour" />
+            <Rating label="Punctuality" name="punctuality" />
+            <Rating label="Overall" name="overall" />
 
-        <button
-          onClick={handleSubmit}
-          disabled={submitted}
-          className={`w-full py-2 rounded text-white ${
-            submitted
-              ? "bg-gray-400"
-              : "bg-blue-600 hover:bg-blue-700"
-          }`}
-        >
+            {/* Comments */}
+            <textarea
+              name="comments"
+              placeholder="Comments"
+              onChange={handleChange}
+              className="w-full p-2 border"
+            />
 
-          {submitted ? "Feedback Submitted" : "Submit Feedback"}
+            <button className="bg-blue-600 text-white p-2 w-full rounded">
+              Submit Feedback
+            </button>
 
-        </button>
-
+          </form>
+        </div>
       </div>
-
-    </div>
     </>
   );
 };

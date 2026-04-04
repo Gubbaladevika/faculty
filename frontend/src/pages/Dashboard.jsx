@@ -1,112 +1,125 @@
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 
-const faculties = [
-  { name: "Dr. Ramesh" },
-  { name: "Prof. Anitha" },
-  { name: "Dr. Kumar" },
-];
-
 const Dashboard = () => {
-
   const navigate = useNavigate();
-  const usermail = localStorage.getItem("userEmail");
 
-  // Calculate feedback progress
-  const totalFaculty = faculties.length;
+  const [faculty, setFaculty] = useState([]);
+  const [submittedFaculty, setSubmittedFaculty] = useState([]);
+  const [studentGroup, setStudentGroup] = useState(null);
 
-  const completed = faculties.filter((f) => {
-    const key = `feedback_${usermail}_${f.name}`;
-    return localStorage.getItem(key) === "true";
-  }).length;
+  const username = localStorage.getItem("username") || "Student";
+  const token = localStorage.getItem("token");
 
-  const progress = (completed / totalFaculty) * 100;
+  // 1) get student group first
+  useEffect(() => {
+    if (!token) return;
+
+    fetch("http://localhost:8000/api/my-group/", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("GROUP DATA:", data);
+        setStudentGroup(data.group);
+      })
+      .catch((err) => {
+        console.log("Group error:", err);
+        setStudentGroup(null);
+      });
+  }, [token]);
+
+  // 2) load faculty only after group is available
+  useEffect(() => {
+    if (studentGroup === null || !token) return;
+
+    fetch(`http://localhost:8000/api/faculty/?group=${studentGroup}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setFaculty(Array.isArray(data) ? data : []);
+      })
+      .catch((err) => {
+        console.log("Faculty error:", err);
+        setFaculty([]);
+      });
+  }, [studentGroup, token]);
+
+  // 3) load submitted status only after group is available
+  useEffect(() => {
+    if (studentGroup === null || !token) return;
+
+    fetch(`http://localhost:8000/api/feedback-status/?group=${studentGroup}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setSubmittedFaculty(Array.isArray(data) ? data : []);
+      })
+      .catch((err) => {
+        console.log("Status error:", err);
+        setSubmittedFaculty([]);
+      });
+  }, [studentGroup, token]);
 
   return (
     <>
       <Navbar />
 
       <div className="min-h-screen bg-gray-100 p-8">
-
         <div className="max-w-5xl mx-auto">
+          <h1 className="text-3xl font-bold mb-2">Student Dashboard</h1>
 
-          {/* Welcome Section */}
+          <p className="text-gray-600 mb-6">Welcome, {username}</p>
 
-          <h1 className="text-3xl font-bold mb-2">
-            Student Dashboard
-          </h1>
-
-          <p className="text-gray-600 mb-6">
-            Welcome, {usermail}
-          </p>
-
-
-          {/* Dashboard Cards */}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-            {/* Progress Card */}
-
-            <div className="bg-white shadow rounded-xl p-6">
-
-              <h2 className="text-xl font-semibold mb-4">
-                📊 Feedback Progress
-              </h2>
-
-              <div className="w-full bg-gray-200 rounded-full h-4 mb-2">
-
-                <div
-                  className="bg-green-500 h-4 rounded-full"
-                  style={{ width: `${progress}%` }}
-                ></div>
-
-              </div>
-
-              <p className="text-sm text-gray-600">
-                {completed} / {totalFaculty} Completed
-              </p>
-
-            </div>
-
-
-            {/* Give Feedback Card */}
-
-            <div
+          <div className="mb-6">
+            <button
               onClick={() => navigate("/feedbackform")}
-              className="bg-white shadow rounded-xl p-6 cursor-pointer hover:shadow-xl transition"
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700"
             >
-
-              <h2 className="text-xl font-semibold mb-2">
-                📝 Give Feedback
-              </h2>
-
-              <p className="text-gray-500 text-sm">
-                Submit feedback for your faculty members.
-              </p>
-
-            </div>
-
+              Go to Feedback Form
+            </button>
           </div>
 
+          <div className="bg-white p-6 rounded-xl shadow mt-6">
+            <h3 className="text-lg font-semibold mb-3">Faculty Status</h3>
 
-          {/* Instructions */}
+            <ul className="space-y-2">
+              {faculty.map((f) => (
+                <li
+                  key={f.id}
+                  className="flex justify-between items-center border-b pb-2"
+                >
+                  <span>{f.name}</span>
 
-          <div className="bg-white shadow rounded-xl p-6 mt-8">
-
-            <h2 className="text-xl font-semibold mb-3">
-              Instructions
-            </h2>
-
-            <ul className="text-gray-600 text-sm space-y-2">
-              <li>• Select a faculty and submit your feedback.</li>
-              <li>• Each faculty can be reviewed only once.</li>
-              <li>• Your feedback helps improve teaching quality.</li>
+                  {submittedFaculty.includes(f.id) ? (
+                    <button
+                      disabled
+                      className="bg-green-500 text-white px-3 py-1 rounded opacity-70 cursor-not-allowed"
+                    >
+                      ✔ Submitted
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => navigate("/feedbackform")}
+                      className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+                    >
+                      Give Feedback
+                    </button>
+                  )}
+                </li>
+              ))}
             </ul>
-
           </div>
-
         </div>
-
       </div>
     </>
   );
