@@ -19,7 +19,7 @@ const AdminLogin = () => {
     console.log("ADMIN LOGIN RESPONSE:", res.data);
     localStorage.setItem("token", res.data.access);
 
-    // ✅ ADD THIS LINE (THIS IS YOUR MISSING PIECE)
+    
    localStorage.setItem("role", res.data.role || "admin");
 
     navigate("/admin", { replace: true });

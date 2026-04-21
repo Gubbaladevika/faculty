@@ -31,12 +31,10 @@ const handleLogin = async () => {
     if (res.ok && data.access) {
       localStorage.setItem("token", data.access);
 
-      // ✅ ADD THIS LINE (IMPORTANT)
-      localStorage.setItem("role", "data.role"); // Assuming backend sends role in response 
+      localStorage.setItem("role", "data.role"); 
 
       localStorage.setItem("username", email);
 
-      // ✅ REDIRECT BASED ON ROLE
       if (data.role === "admin") {
         navigate("/admin", { replace: true });
       } else {
@@ -56,7 +54,7 @@ const handleLogin = async () => {
   return (
     <div className="min-h-screen flex">
 
-      {/* LEFT SIDE */}
+      
       <div className="hidden md:flex w-1/2 bg-gradient-to-br from-green-500 to-emerald-600 text-white items-center justify-center">
         <div className="text-center px-10">
           <h1 className="text-4xl font-bold mb-4">Student Portal</h1>
@@ -66,7 +64,7 @@ const handleLogin = async () => {
         </div>
       </div>
 
-      {/* RIGHT SIDE */}
+      
       <div className="w-full md:w-1/2 flex items-center justify-center bg-gray-100">
         <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
 
@@ -74,12 +72,12 @@ const handleLogin = async () => {
             Student Login
           </h2>
 
-          {/* ERROR MESSAGE */}
+          
           {error && (
             <p className="text-red-500 text-sm mb-4 text-center">{error}</p>
           )}
 
-          {/* EMAIL */}
+          
           <input
             type="email"
             placeholder="Enter Email"
@@ -87,7 +85,7 @@ const handleLogin = async () => {
             onChange={(e) => setEmail(e.target.value)}
           />
 
-          {/* PASSWORD WITH SHOW/HIDE */}
+          
           <div className="relative mb-4">
   <input
     type={showPassword ? "text" : "password"}
@@ -104,7 +102,7 @@ const handleLogin = async () => {
   </span>
 </div>
 
-          {/* LOGIN BUTTON */}
+          
           <button
             onClick={handleLogin}
             disabled={loading}
@@ -113,7 +111,7 @@ const handleLogin = async () => {
             {loading ? "Logging in..." : "Login"}
           </button>
 
-          {/* SIGNUP */}
+          
           <p
             className="text-sm text-green-600 mt-4 text-center cursor-pointer hover:underline"
             onClick={() => navigate("/signup")}

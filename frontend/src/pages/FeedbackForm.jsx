@@ -1,17 +1,41 @@
 import React, { useEffect, useState } from "react";
-import StarRating from "../components/StarRating";
 import Navbar from "../components/Navbar";
+import { useParams } from "react-router-dom";
+
+const StarRating = ({ value, onChange }) => {
+  return (
+    <div className="flex gap-1 text-2xl">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <button
+          key={star}
+          type="button"
+          onClick={() => onChange(star)}
+          className={`transition ${
+            star <= value ? "text-yellow-400" : "text-gray-300"
+          } hover:scale-110`}
+        >
+          ★
+        </button>
+      ))}
+    </div>
+  );
+};
 
 const FeedbackForm = () => {
-  const [departments, setDepartments] = useState([]);
-  const [groups, setGroups] = useState([]);
+  const token = localStorage.getItem("token");
+  const { facultyId } = useParams();
+
+  console.log("facultyId from URL:", facultyId);
+
+  const [groupInfo, setGroupInfo] = useState(null);
   const [faculty, setFaculty] = useState([]);
   const [submittedFaculty, setSubmittedFaculty] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
   const [formData, setFormData] = useState({
-    department: "",
-    group: "",
-    faculty: "",
     teaching: 0,
     knowledge: 0,
     communication: 0,
@@ -22,83 +46,88 @@ const FeedbackForm = () => {
     comments: "",
   });
 
-  // 🔹 Load Departments
-useEffect(() => {
-  const token = localStorage.getItem("token");
+  const selectedFaculty = faculty.find(
+    (f) => String(f.id) === String(facultyId)
+  );
 
-  fetch("http://127.0.0.1:8000/api/departments/", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-    .then((res) => res.json())
-    .then((data) => {
-      setDepartments(Array.isArray(data) ? data : []);
-    })
-    .catch((err) => {
-      console.log("Department error:", err);
-      setDepartments([]);
-    });
-}, []);
+  console.log("Faculty List:", faculty);
+  console.log("Selected Faculty:", selectedFaculty);
 
-  // 🔹 Department Change
- const handleDepartmentChange = (e) => {
-  const deptId = e.target.value;
+  useEffect(() => {
+    if (!token) {
+      setError("Login expired. Please login again.");
+      setLoading(false);
+      return;
+    }
 
-  setFormData({ ...formData, department: deptId });
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-  const token = localStorage.getItem("token");
+        // Student Group
+        const groupRes = await fetch("http://127.0.0.1:8000/api/my-group/", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-  fetch(`http://127.0.0.1:8000/api/groups/?department=${deptId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-    .then((res) => res.json())
-    .then((data) => {
-      setGroups(Array.isArray(data) ? data : []);
-    })
-    .catch((err) => {
-      console.log("Group error:", err);
-      setGroups([]);
-    });
-};
-  //  Group change
-  const handleGroupChange = (e) => {
-  const groupId = e.target.value;
+        const groupData = await groupRes.json();
 
-  setFormData({ ...formData, group: groupId });
+        if (!groupRes.ok) {
+          setError(groupData.error || "Unable to load group");
+          setLoading(false);
+          return;
+        }
 
-  const token = localStorage.getItem("token");
+        setGroupInfo(groupData);
 
-  if (!token) return;
+        // Faculty List
+        const facultyRes = await fetch(
+          `http://127.0.0.1:8000/api/faculty/?group=${groupData.group}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
-  // faculty API
-  fetch(`http://127.0.0.1:8000/api/faculty/?group=${groupId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-    .then((res) => res.json())
-    .then((data) => {
-      setFaculty(Array.isArray(data) ? data : []);
-    })
-    .catch(() => setFaculty([]));
+        const facultyData = await facultyRes.json();
 
-  // feedback status API
-  fetch(`http://127.0.0.1:8000/api/feedback-status/?group=${groupId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-    .then((res) => res.json())
-    .then((data) => {
-      setSubmittedFaculty(Array.isArray(data) ? data : []);
-    })
-    .catch(() => setSubmittedFaculty([]));
-};
+        if (Array.isArray(facultyData)) {
+          setFaculty(facultyData);
+        } else {
+          setFaculty([]);
+        }
 
-  // 🔹 Input Change
+        // Submitted Faculty Status
+        const statusRes = await fetch(
+          `http://127.0.0.1:8000/api/feedback-status/?group=${groupData.group}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const statusData = await statusRes.json();
+
+        if (Array.isArray(statusData)) {
+          setSubmittedFaculty(statusData);
+        } else {
+          setSubmittedFaculty([]);
+        }
+      } catch (err) {
+        console.log(err);
+        setError("Server error while loading form");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [token, facultyId]);
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -106,167 +135,209 @@ useEffect(() => {
     });
   };
 
-  // 🔹 Submit Feedback
-  const handleSubmit = async (e) => {
-  e.preventDefault();
-
-  const token = localStorage.getItem("token");
-
-  if (!token) {
-    alert("Login expired. Please login again.");
-    return;
-  }
-
-  if (!formData.faculty) {
-    alert("Select faculty first");
-    return;
-  }
-
-  const payload = {
-    faculty: Number(formData.faculty),
-    teaching: formData.teaching,
-    knowledge: formData.knowledge,
-    communication: formData.communication,
-    interaction: formData.interaction,
-    behaviour: formData.behaviour,
-    punctuality: formData.punctuality,
-    overall: formData.overall,
-    comments: formData.comments,
-  };
-
-  try {
-    const res = await fetch("http://127.0.0.1:8000/api/submit-feedback/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(payload),
-    });
-
-    let data;
-
-try {
-  data = await res.json();
-} catch {
-  data = { error: "Server error" };
-}
-
-    if (res.status === 401) {
-      alert("Session expired. Login again.");
-      return;
-    }
-
-    if (!res.ok) {
-      console.log(data);
-      alert(data?.detail || "Submission failed");
-      return;
-    }
-
-    alert("Feedback submitted");
-
-    setSubmittedFaculty((prev) => [
-      ...prev,
-      Number(formData.faculty),
-    ]);
-  } catch (err) {
-    console.error(err);
-    alert("Server error");
-  }
-};
-
-
-  // 🔹 Rating Component
-  const handleRatingChange = (name, value) => {
+  const handleRatingChange = (field, value) => {
     setFormData({
       ...formData,
-      [name]: value,
+      [field]: value,
     });
   };
 
-  const Rating = ({ label, name }) => (
-    <div>
-      <label className="text-sm font-semibold">{label}</label>
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    setError("");
+    setMessage("");
+
+    if (!selectedFaculty) {
+      setError("Faculty not found");
+      return;
+    }
+
+    if (submittedFaculty.includes(Number(facultyId))) {
+      setError("You already submitted feedback for this faculty");
+      return;
+    }
+
+    const payload = {
+      faculty: Number(facultyId),
+      teaching: formData.teaching,
+      knowledge: formData.knowledge,
+      communication: formData.communication,
+      interaction: formData.interaction,
+      behaviour: formData.behaviour,
+      punctuality: formData.punctuality,
+      overall: formData.overall,
+      comments: formData.comments,
+    };
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/submit-feedback/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || data.detail || "Submission failed");
+        return;
+      }
+
+      setMessage("Feedback submitted successfully");
+
+      setSubmittedFaculty((prev) => [...prev, Number(facultyId)]);
+
+      setFormData({
+        teaching: 0,
+        knowledge: 0,
+        communication: 0,
+        interaction: 0,
+        behaviour: 0,
+        punctuality: 0,
+        overall: 0,
+        comments: "",
+      });
+
+      setTimeout(() => {
+        setMessage("");
+      }, 3000);
+    } catch (err) {
+      console.log(err);
+      setError("Server error");
+    }
+  };
+
+  const RatingField = ({ label, field }) => (
+    <div className="bg-gray-50 border rounded-xl p-4">
+      <label className="block text-sm font-semibold text-gray-700 mb-2">
+        {label}
+      </label>
       <StarRating
-        name={name}
-        value={formData[name]}
-        onChange={handleRatingChange}
+        value={formData[field]}
+        onChange={(value) => handleRatingChange(field, value)}
       />
     </div>
   );
+
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <div className="min-h-screen flex items-center justify-center bg-gray-100">
+          <div className="bg-white p-8 rounded-2xl shadow-lg text-lg font-semibold">
+            Loading feedback form...
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
       <Navbar />
 
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="bg-white p-8 rounded-xl shadow-lg w-[500px]">
+      <div className="min-h-screen bg-gray-100 py-10 px-4">
+        <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-2xl overflow-hidden">
+          
+          <div className="bg-blue-600 text-white px-8 py-6">
+            <h1 className="text-3xl font-bold">Faculty Feedback Form</h1>
+            <p className="text-blue-100 mt-2">
+              Submit feedback for your assigned faculty only
+            </p>
+          </div>
 
-          <h2 className="text-xl font-bold text-center mb-4">
-            Faculty Feedback
-          </h2>
+          <div className="p-8">
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+            {message && (
+              <div className="fixed top-5 left-1/2 -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-xl shadow-lg z-50">
+                {message}
+              </div>
+            )}
 
-            {/* Department */}
-            <div>
-              <label>Department</label>
-              <select onChange={handleDepartmentChange} className="w-full p-2 border">
-                <option>Select Department</option>
-                {(Array.isArray(departments) ? departments : []).map((d) => (
-                  <option key={d.id} value={d.id}>{d.name}</option>
-                ))}
-              </select>
-            </div>
+            {error && (
+              <div className="mb-6 bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded-xl">
+                {error}
+              </div>
+            )}
 
-            {/* Group */}
-            <div>
-              <label>Group</label>
-              <select onChange={handleGroupChange} className="w-full p-2 border">
-                <option>Select Group</option>
-                {(Array.isArray(groups) ? groups : []).map((g) => (
-                  <option key={g.id} value={g.id}>
-                    {g.name} - Year {g.year}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {groupInfo && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <div className="bg-gray-50 border rounded-xl p-4">
+                  <p className="text-sm text-gray-500">Department</p>
+                  <p className="font-semibold">{groupInfo.department}</p>
+                </div>
 
-            {/* Faculty */}
-            <div>
-              <label>Faculty</label>
-              <select name="faculty" onChange={handleChange} className="w-full p-2 border">
-                <option>Select Faculty</option>
-                {(Array.isArray(faculty) ? faculty : []).map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.name} {submittedFaculty.includes(f.id) ? "✔" : ""}
-                  </option>
-                ))}
-              </select>
-            </div>
+                <div className="bg-gray-50 border rounded-xl p-4">
+                  <p className="text-sm text-gray-500">Group</p>
+                  <p className="font-semibold">{groupInfo.group_name}</p>
+                </div>
 
-            {/* Ratings */}
-            <Rating label="Teaching" name="teaching" />
-            <Rating label="Knowledge" name="knowledge" />
-            <Rating label="Communication" name="communication" />
-            <Rating label="Interaction" name="interaction" />
-            <Rating label="Behaviour" name="behaviour" />
-            <Rating label="Punctuality" name="punctuality" />
-            <Rating label="Overall" name="overall" />
+                <div className="bg-gray-50 border rounded-xl p-4">
+                  <p className="text-sm text-gray-500">Year</p>
+                  <p className="font-semibold">{groupInfo.year}</p>
+                </div>
+              </div>
+            )}
 
-            {/* Comments */}
-            <textarea
-              name="comments"
-              placeholder="Comments"
-              onChange={handleChange}
-              className="w-full p-2 border"
-            />
+            <form onSubmit={handleSubmit} className="space-y-6">
 
-            <button className="bg-blue-600 text-white p-2 w-full rounded">
-              Submit Feedback
-            </button>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Faculty
+                </label>
 
-          </form>
+                <div className="w-full border border-gray-300 rounded-xl p-3 bg-gray-100 font-medium text-gray-800">
+                  {selectedFaculty
+                    ? selectedFaculty.name
+                    : "Faculty not found"}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <RatingField label="Teaching" field="teaching" />
+                <RatingField label="Knowledge" field="knowledge" />
+                <RatingField label="Communication" field="communication" />
+                <RatingField label="Interaction" field="interaction" />
+                <RatingField label="Behaviour" field="behaviour" />
+                <RatingField label="Punctuality" field="punctuality" />
+              </div>
+
+              <RatingField label="Overall" field="overall" />
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Comments
+                </label>
+
+                <textarea
+                  name="comments"
+                  value={formData.comments}
+                  onChange={handleChange}
+                  rows="4"
+                  placeholder="Write your feedback here..."
+                  className="w-full border border-gray-300 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={submittedFaculty.includes(Number(facultyId))}
+                className={`w-full py-3 rounded-xl font-semibold text-white transition ${
+                  submittedFaculty.includes(Number(facultyId))
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700"
+                }`}
+              >
+                {submittedFaculty.includes(Number(facultyId))
+                  ? "Already Submitted"
+                  : "Submit Feedback"}
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </>

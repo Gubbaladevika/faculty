@@ -8,6 +8,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminLogin from "./pages/AdminLogin";
 import { Navigate } from "react-router-dom";
 
+
 const AdminProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("token");
 
@@ -25,7 +26,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/feedbackform" element={<ProtectedRoute><FeedbackForm /></ProtectedRoute>} />
+        <Route path="/feedbackform/:facultyId" element={<ProtectedRoute><FeedbackForm /></ProtectedRoute>} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/admin-login" element={<AdminLogin />} />  
         <Route path="/admin" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
