@@ -15,6 +15,7 @@ urlpatterns = [
     path('api/signup/', signup),
     path('api/login/', login),
     path('api/my-group/', my_group),
+    
 ]
     
 

@@ -10,9 +10,7 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 
-# =====================
-# APPLICATIONS
-# =====================
+
 INSTALLED_APPS = [
     'corsheaders',
 
@@ -31,10 +29,6 @@ INSTALLED_APPS = [
     'feedback',
 ]
 
-
-# =====================
-# MIDDLEWARE
-# =====================
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
 
@@ -52,9 +46,6 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'backend.urls'
 
 
-# =====================
-# TEMPLATES
-# =====================
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -74,9 +65,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'backend.wsgi.application'
 
 
-# =====================
-# DATABASE
-# =====================
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -84,10 +72,6 @@ DATABASES = {
     }
 }
 
-
-# =====================
-# PASSWORD VALIDATION
-# =====================
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -96,30 +80,17 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# =====================
-# INTERNATIONALIZATION
-# =====================
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-
-# =====================
-# STATIC FILES
-# =====================
 STATIC_URL = 'static/'
 
 
-# =====================
-# DEFAULT AUTO FIELD
-# =====================
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-# =====================
-# CORS CONFIG (IMPORTANT)
-# =====================
 CORS_ALLOW_ALL_ORIGINS = False
 
 CORS_ALLOWED_ORIGINS = [
@@ -130,9 +101,7 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ALLOW_CREDENTIALS = True
 
 
-# =====================
-# REST FRAMEWORK
-# =====================
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -143,10 +112,15 @@ REST_FRAMEWORK = {
 }
 
 
-# =====================
-# SIMPLE JWT
-# =====================
+
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'gubbaladevika65@gmail.com'
+EMAIL_HOST_PASSWORD = 'ncwvfqpltjityzum'

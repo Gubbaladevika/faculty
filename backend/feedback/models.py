@@ -1,15 +1,13 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-# ------------------ Department ------------------
+
 class Department(models.Model):
     name = models.CharField(max_length=100)
 
     def __str__(self):
         return self.name
 
-
-# ------------------ Group ------------------
 class Group(models.Model):
     YEAR_CHOICES = [
         ('1', '1st Year'),
@@ -32,15 +30,15 @@ class Subject(models.Model):
         return f"{self.name} ({self.group.name} - {self.group.get_year_display()})"
 
 
-# ------------------ Student ------------------
-
 class Student(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
-    
 
-# ------------------ Faculty ------------------
+    def __str__(self):
+        return self.name
+
+
 class Faculty(models.Model):
     name = models.CharField(max_length=100)
     subject = models.CharField(max_length=100)
@@ -50,7 +48,7 @@ class Faculty(models.Model):
         return f"{self.name} - {self.subject} ({self.group})"
 
 
-# ------------------ Feedback ------------------
+
 class Feedback(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
     faculty = models.ForeignKey(Faculty, on_delete=models.CASCADE)
