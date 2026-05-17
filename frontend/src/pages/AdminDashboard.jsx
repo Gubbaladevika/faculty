@@ -46,7 +46,7 @@ const AdminDashboard = () => {
   }
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/feedback/", {
+    fetch(`${import.meta.env.VITE_API_URL}/api/feedback/`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -162,7 +162,7 @@ const AdminDashboard = () => {
   }, [token]);
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/pending-students/", {
+    fetch(`${import.meta.env.VITE_API_URL}/api/pending-students/`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -189,7 +189,7 @@ const AdminDashboard = () => {
   }, [token]);
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/student-counts/", {
+    fetch(`${import.meta.env.VITE_API_URL}/api/student-counts/`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -358,7 +358,7 @@ const AdminDashboard = () => {
       setSendingEmailFor(faculty.name);
 
       const response = await fetch(
-        "http://127.0.0.1:8000/api/send-improvement-email/",
+        `${import.meta.env.VITE_API_URL}/api/send-improvement-email/`,
         {
           method: "POST",
           headers: {

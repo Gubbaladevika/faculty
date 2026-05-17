@@ -66,7 +66,7 @@ const FeedbackForm = () => {
         setError("");
 
         // Student Group
-        const groupRes = await fetch("http://127.0.0.1:8000/api/my-group/", {
+        const groupRes = await fetch(`${import.meta.env.VITE_API_URL}/api/my-group/`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -84,13 +84,13 @@ const FeedbackForm = () => {
 
         // Faculty List
         const facultyRes = await fetch(
-          `http://127.0.0.1:8000/api/faculty/?group=${groupData.group}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+  `${import.meta.env.VITE_API_URL}/api/faculty/?group=${groupData.group}`,
+  {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }
+);
 
         const facultyData = await facultyRes.json();
 
@@ -102,7 +102,7 @@ const FeedbackForm = () => {
 
         // Submitted Faculty Status
         const statusRes = await fetch(
-          `http://127.0.0.1:8000/api/feedback-status/?group=${groupData.group}`,
+          `${import.meta.env.VITE_API_URL}/api/feedback-status/?group=${groupData.group}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -171,7 +171,7 @@ const FeedbackForm = () => {
     };
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/submit-feedback/", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/submit-feedback/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

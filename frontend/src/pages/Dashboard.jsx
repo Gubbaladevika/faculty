@@ -20,7 +20,7 @@ const Dashboard = () => {
       return;
     }
 
-    fetch("http://127.0.0.1:8000/api/my-group/", {
+    fetch(`${import.meta.env.VITE_API_URL}/api/my-group/`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -43,7 +43,7 @@ const Dashboard = () => {
   useEffect(() => {
     if (!studentGroup || !token) return;
 
-    fetch(`http://127.0.0.1:8000/api/faculty/?group=${studentGroup}`, {
+    fetch(`${import.meta.env.VITE_API_URL}/api/faculty/?group=${studentGroup}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -62,7 +62,7 @@ const Dashboard = () => {
   useEffect(() => {
     if (!studentGroup || !token) return;
 
-    fetch(`http://127.0.0.1:8000/api/feedback-status/?group=${studentGroup}`, {
+    fetch(`${import.meta.env.VITE_API_URL}/api/feedback-status/?group=${studentGroup}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
