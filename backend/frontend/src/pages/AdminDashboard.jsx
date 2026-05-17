@@ -7,7 +7,7 @@ const AdminDashboard = () => {
 
   // 1️⃣ Fetch data
   useEffect(() => {
-    axios.get("http://127.0.0.1:8000/api/feedback/")
+    axios.get(`${import.meta.env.VITE_API_URL}/api/feedback/`)
       .then((res) => {
         setData(res.data);
       })

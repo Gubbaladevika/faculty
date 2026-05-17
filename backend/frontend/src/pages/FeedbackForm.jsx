@@ -92,7 +92,7 @@ const FeedbackForm = () => {
   try {
 
     await axios.post(
-      "http://127.0.0.1:8000/api/submit-feedback/",
+      `${import.meta.env.VITE_API_URL}/api/submit-feedback/`,
       data
     );
 
